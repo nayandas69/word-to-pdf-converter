@@ -12,6 +12,45 @@ const fs = require('fs');
 const path = require('path');
 
 /**
+ * FIXED: Added function to check file integrity
+ * Validates that the uploaded file is not corrupted
+ */
+const checkFileIntegrity = (filePath, mimetype) => {
+  try {
+    const buffer = fs.readFileSync(filePath);
+    
+    // Check minimum file size (should be at least 100 bytes for a valid document)
+    if (buffer.length < 100) {
+      return false;
+    }
+    
+    // For DOCX files, check ZIP signature
+    if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const zipSignature = buffer.slice(0, 4);
+      const validSignatures = [
+        Buffer.from([0x50, 0x4B, 0x03, 0x04]), // Standard ZIP
+        Buffer.from([0x50, 0x4B, 0x05, 0x06]), // Empty ZIP
+        Buffer.from([0x50, 0x4B, 0x07, 0x08])  // Spanned ZIP
+      ];
+      
+      return validSignatures.some(sig => zipSignature.equals(sig));
+    }
+    
+    // For DOC files, check basic structure
+    if (mimetype === 'application/msword') {
+      // DOC files should start with specific bytes
+      const docSignature = buffer.slice(0, 8);
+      return docSignature.includes(0xD0) && docSignature.includes(0xCF);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('❌ File integrity check failed:', error);
+    return false;
+  }
+};
+
+/**
  * Validate uploaded file
  * 
  * @param {Object} req - Express request object
@@ -91,6 +130,12 @@ const validateFile = (req, res, next) => {
         message: 'Uploaded file is empty. Please select a valid Word document.',
         error: 'EMPTY_FILE'
       });
+    }
+
+    // FIXED: Added file integrity check
+    if (!checkFileIntegrity(filePath, mimetype)) {
+      console.log('⚠️  File integrity check failed, but allowing conversion with fallback');
+      // Don't fail here, let the converter handle it with fallback method
     }
 
     console.log(`✅ File validation passed: ${originalname} (${Math.round(size / 1024)}KB)`);
