@@ -34,7 +34,8 @@ A modern, full-stack web application that converts Word documents (.doc, .docx) 
 - **Node.js** - JavaScript runtime environment
 - **Express.js** - Web application framework
 - **Multer** - Middleware for handling file uploads
-- **docx-pdf** - Library for converting Word documents to PDF
+- **Mammoth** - Library for extracting text from Word documents
+- **PDF-lib** - Library for creating PDF documents
 - **Helmet** - Security middleware for Express
 - **CORS** - Cross-Origin Resource Sharing middleware
 - **Express Rate Limit** - Rate limiting middleware
